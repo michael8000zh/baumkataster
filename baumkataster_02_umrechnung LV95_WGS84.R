@@ -1,23 +1,46 @@
 # Masterarbeit Baumkataster ZHAW
+# In diesem Script werden die LV95 Koordinaten auf WGS84 umgerechnet.
+
 # Michael Hilti (michael.hilti@gmail.com)
-# 2021-11-22, 09.22 Uhr
+# 2021-11-23, 19.53 Uhr
 
-# Festlegen des Working directories
-setwd("/Users/michael/Documents/Data Science/Masterarbeit_ZHAW/")
+# -*- coding: utf-8 -*-
 
-# laden der verwendeten Libraries
+# Das Baumkataster von Grün Stadt Zürich verwendet das in der Schweiz gebräuchliche Koordinatensystem
+# LV95, um die genauen Standorte der Bäume zu bezeichnen. Leaflet benötigt jedoch Koordinaten
+# im international gebräuchlichen WGS84 Dezimalkoordinatensystem. Dieses Script nimmt die
+# Umrechnung vor. Als Grundlage wird eine leicht veränderte Version des Scripts Valentin Minder
+# verwendet. Die Anpassung stellt die Umrechnung von LV95 sicher, während das Script von Minder
+# auf LV03 ausgerichtet ist.
+# Koordinaten in ihrer jeweiligen Form:
+# LV95: 2 686 027.5, 1 252 531.4
+# LV03: 686 027.5, 252 531.4
+# WGS84: long 8.578453446, lat: 47.408977778
+
+# Source: https://github.com/ValentinMinder/Swisstopo-WGS84-LV03/blob/master/scripts/r/WGS84_CH1903.R
+
+# Alle vorhandenen Objekte im Workspace löschen
+rm(list = objects(pattern = ".*"))
+
+# Laden der benötigten Libraries
 library(tidyverse)
 
-# Einlesen der Daten aus baumkataster_01_datacleaning.r
-kataster <- read_delim("data_01.csv", delim = ",", col_names = TRUE)
-kataster <- head(kataster, 50)
+# Festlegen der Anzahl verwendeten Nachkomastellen
+options(digits = 9)
 
-# LV95: POINT (y = 2686027.5 x = 1251531.4)
-# WGS84: long : 8.578453446, lat: 47.408977778
+# Festlegen des In- und Output Files
+input_file <- "data/baumkataster_clean.csv"
+output_file <- "data/baumkataster_clean_wgs84.csv"
+
+# Einlesen baumkataster_clean.csv, speichern als kataster
+kataster <- read_delim(input_file, delim = ",", col_names = TRUE)
+
+# Definieren der Umrechnungsfunktion nach Minder
 CH.to.WGS.lat <- function (y, x){
   
   ## Converts military to civil and  to unit = 1000km
   ## Auxiliary values (% Bern)
+  ## Hier wird von y 2600000 anstatt 600000 sowie 1200000 anstatt 200000 abgezogen. 
   y_aux <- (y - 2600000)/1000000
   x_aux <- (x - 1200000)/1000000
   
@@ -35,18 +58,16 @@ CH.to.WGS.lat <- function (y, x){
   return(lat)  
 }
 
-kataster$lat <- sapply(kataster$che_y, CH.to.WGS.lat, kataster$che_x)
-
-# Erfolgskontrolle
-view(kataster)
-
+# Ausführen der Funktion und Umrechen der Koordination von LV95 zu WGS84
+kataster$lat <- CH.to.WGS.lat(kataster$che_y, kataster$che_x)
 
 ## Convert CH y/x to WGS long
 CH.to.WGS.lng <- function (y, x){
   
   ## Converts military to civil and  to unit = 1000km
   ## Auxiliary values (% Bern)
-  y_aux <- (y - 2600000)/1000000
+  ## Hier wird von y 2600000 anstatt 600000 sowie 1200000 anstatt 200000 abgezogen. 
+    y_aux <- (y - 2600000)/1000000
   x_aux <- (x - 1200000)/1000000
   
   ## Process long
@@ -62,10 +83,11 @@ CH.to.WGS.lng <- function (y, x){
   return(lng)
 }
 
-kataster$lng <- sapply(kataster$che_y, CH.to.WGS.lng, kataster$che_x)
+# Ausführen der Funktion und Umrechen der Koordination von LV95 zu WGS84
+kataster$lng <- CH.to.WGS.lng(kataster$che_y, kataster$che_x)
 
 # Erfolgskontrolle
 view(kataster)
 
-# Abspeichern CSV 
-write.csv(kataster, "/Users/michael/Documents/Data Science/Masterarbeit_ZHAW/data_02.csv", row.names = TRUE)
+# Abspoeichern des Datensatzes als CSV-Datei
+write.csv(kataster, output_file, row.names = TRUE)

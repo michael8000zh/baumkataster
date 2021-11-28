@@ -1,17 +1,26 @@
 # Masterarbeit Baumkataster ZHAW
+# Dieses Script liest die Daten ein und bereinigt sie. 
+
 # Michael Hilti (michael.hilti@gmail.com)
-# 2021-11-22, 09.22 Uhr
+# 2021-11-23, 19.40 Uhr
 
-# Einlesen der Daten und Data Cleaning
+# -*- coding: utf-8 -*-
 
-# Festlegen des Working directories
-setwd("/Users/michael/Documents/Data Science/Masterarbeit_ZHAW/")
+# Alle vorhandenen Objekte im Workspace löschen
+rm(list = objects(pattern = ".*"))
 
 # Laden der benötigten Libraries
 library(tidyverse)
 
+# Festlegen der Anzahl verwendeten Nachkomastellen
+options(digits = 9)
+
+# Festlegen des In- und Output Files
+input_file <- "data/gsz.baumkataster_baumstandorte.csv"
+output_file <- "data/baumkataster_clean.csv"
+
 # Einlesen gsz.baumkataster_baumstandorte.csv, speichern als kataster
-kataster <- read_delim("gsz.baumkataster_baumstandorte.csv", delim = ",", col_names = TRUE)
+kataster <- read_delim(input_file, delim = ",", col_names = TRUE)
 
 # Faktorisiereng der Spalten kategorie, quartier, status, baumtyp, genauigkeit, baumartlat, baumgattunglat,
 # baumnamedeu, baumnamelat 
@@ -99,7 +108,7 @@ print(zahl_baumartlat.df)
 kataster.df <- as.data.frame(kataster)
 kataster.df$baumnamedeu_kompakt = kataster.df$baumnamedeu
 
-# mutate string
+# mutate strings der Baumarten um Komplexität zu reduzieren.
 kataster.df$baumnamedeu_kompakt <- sub("Apfel-Obstgehölz.*", "Apfel-Obstgehölz", kataster.df$baumnamedeu_kompakt)
 kataster.df$baumnamedeu_kompakt <- sub("Aprikose-Obstgehölz.*", "Aprikose-Obstgehölz", kataster.df$baumnamedeu_kompakt)
 kataster.df$baumnamedeu_kompakt <- sub("Birne-Obstgehölz.*", "Birne-Obstgehölz", kataster.df$baumnamedeu_kompakt)
@@ -118,8 +127,7 @@ dim(zahl_baumnamedeu_kompakt)
 dim(zahl_baumnamedeu)
 # Neu Anzahl der Werte in baumnamedeu_kompakt reduziert von 1196 auf 566.
 
-# Für die Weiterverwendung der Koordinaten in Leaflet, müssen die Schweizer Y- und X-Koordinaten in separaten Spalten aufgeteilt werden. 
-# POINT (2686027.5 1251531.4)
+# Für die Weiterverwendung der Koordinaten in Leaflet werden die Schweizer Y- und X-Koordinaten in separaten Spalten aufgeteilt 
 
 # Neue Spalte auf Basis von 'geometry'
 kataster.df$geometry_temp <- kataster.df$geometry
@@ -131,13 +139,12 @@ kataster.df$geometry_temp
 
 # Split 'geometry_temp' on whitespace into 'che_y' and 'che_x'
 kataster.df <- separate(kataster.df, geometry_temp, into = c("che_y", "che_x"), sep = " ")
-print(head(kataster.df$che_x, 20))
-print(head(kataster.df$che_y, 20))
+kataster.df$che_x <- as.numeric(kataster.df$che_x)
+kataster.df$che_y <- as.numeric(kataster.df$che_y)
 
-## Hier sind die Kommanstellen (Zeilte 133) noch vorhanden... in LV95 nicht mehr. Was läuft falsch?
-
-# Umrechnung von LV95 Koordinatensystem auf WGS84 Dezimalsystem erfolgt im Script baumkataster_02_
-# Source: https://github.com/ValentinMinder/Swisstopo-WGS84-LV03/blob/master/scripts/r/WGS84_CH1903.R
+# Erfolgskontrolle
+print(head(kataster.df$che_x, 10))
+print(head(kataster.df$che_y, 10))
 
 # Abspoeichern des Datensatzes als CSV-Datei
-write.csv(kataster.df, "/Users/michael/Documents/Data Science/Masterarbeit_ZHAW/data_01.csv", row.names = TRUE)
+write.csv(kataster.df, output_file, row.names = TRUE)
