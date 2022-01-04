@@ -1,5 +1,4 @@
-# baumkataster
-Masterarbeit ZHAW
+# Master's thesis for MAS Data Science at ZHAW on the visualisation of threes in Zurich
 
 This is the scripting part of my master's thesis at ZHAW's Master of Advanced Studies in Data Science. The goal of the thesis is to visualise threes in the city of Zurich. The tool should help people allergic to certain species of trees to find a neighbourhood to live where not a lot of these specific trees are growing.
 
